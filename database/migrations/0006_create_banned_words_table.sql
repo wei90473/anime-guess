@@ -1,0 +1,6 @@
+CREATE TABLE banned_words (
+    id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    word VARCHAR(100) NOT NULL,
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE KEY uq_banned_words_word (word)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
