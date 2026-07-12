@@ -143,4 +143,15 @@ class Question
 
         return (int) $statement->fetchColumn();
     }
+
+    public static function countByWork(int $workId): int
+    {
+        $statement = Database::connect()->prepare(
+            "SELECT COUNT(*) FROM questions
+             WHERE anime_work_id = :work_id AND status = 'approved' AND is_active = 1"
+        );
+        $statement->execute(['work_id' => $workId]);
+
+        return (int) $statement->fetchColumn();
+    }
 }
