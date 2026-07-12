@@ -11,6 +11,17 @@ declare(strict_types=1);
 <div class="quiz-result">
     <h1>作答結果</h1>
 
+    <?php
+    $correctCount = 0;
+    foreach ($questions as $item) {
+        if (!empty($item['is_correct'])) {
+            $correctCount++;
+        }
+    }
+    $total = count($questions);
+    ?>
+    <p class="quiz-result-score">答對 <?= (int) $correctCount ?> / <?= (int) $total ?> 題</p>
+
     <ul class="quiz-result-list">
         <?php foreach ($questions as $index => $item): ?>
             <li class="quiz-result-item <?= !empty($item['is_correct']) ? 'is-correct' : 'is-wrong' ?>">

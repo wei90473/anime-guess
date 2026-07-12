@@ -12,6 +12,7 @@ use App\Support\Csrf;
 
 ?>
 <div class="work-show">
+    <a href="/" class="back-link">← 回首頁</a>
     <h1><?= htmlspecialchars($work['title'], ENT_QUOTES, 'UTF-8') ?></h1>
 
     <?php if (!empty($work['description'])): ?>

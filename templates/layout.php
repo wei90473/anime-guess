@@ -13,7 +13,13 @@
     <link rel="stylesheet" href="/assets/css/app.css">
 </head>
 <body>
-<?php /* header/footer/nav partials 由 AGQ-011 補齊 */ ?>
+<header class="site-header">
+    <a href="/" class="site-header-title">Anime Guess</a>
+    <nav class="site-nav">
+        <a href="/">首頁</a>
+        <a href="/submit">投稿題目</a>
+    </nav>
+</header>
 <main>
 <?= $content ?? '' ?>
 </main>
