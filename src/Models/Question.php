@@ -79,15 +79,51 @@ class Question
         return $row === false ? null : $row;
     }
 
+    public static function findByIdWithWork(int $id): ?array
+    {
+        $statement = Database::connect()->prepare(
+            'SELECT q.id, q.anime_work_id, q.type, q.prompt, q.choices_json, q.correct_answer,
+                    q.accepted_answers_json, q.origin, q.status, q.submitted_by_token, q.submitted_nickname,
+                    q.filter_flags, q.reviewed_by, q.reviewed_at, q.rejection_reason, q.is_active,
+                    q.created_at, q.updated_at, w.title AS work_title
+             FROM questions q
+             JOIN anime_works w ON w.id = q.anime_work_id
+             WHERE q.id = :id'
+        );
+        $statement->execute(['id' => $id]);
+
+        $row = $statement->fetch();
+
+        return $row === false ? null : $row;
+    }
+
+    public static function findPending(): array
+    {
+        $statement = Database::connect()->query(
+            "SELECT q.id, q.anime_work_id, q.type, q.prompt, q.choices_json, q.correct_answer,
+                    q.accepted_answers_json, q.origin, q.status, q.submitted_by_token, q.submitted_nickname,
+                    q.filter_flags, q.reviewed_by, q.reviewed_at, q.rejection_reason, q.is_active,
+                    q.created_at, q.updated_at, w.title AS work_title
+             FROM questions q
+             JOIN anime_works w ON w.id = q.anime_work_id
+             WHERE q.status = 'pending'
+             ORDER BY q.created_at ASC, q.id ASC"
+        );
+
+        return $statement->fetchAll();
+    }
+
     public static function create(array $data): int
     {
         $statement = Database::connect()->prepare(
             'INSERT INTO questions (
                 anime_work_id, type, prompt, choices_json, correct_answer,
-                accepted_answers_json, origin, status
+                accepted_answers_json, origin, status, submitted_by_token,
+                submitted_nickname, filter_flags
             ) VALUES (
                 :anime_work_id, :type, :prompt, :choices_json, :correct_answer,
-                :accepted_answers_json, :origin, :status
+                :accepted_answers_json, :origin, :status, :submitted_by_token,
+                :submitted_nickname, :filter_flags
             )'
         );
         $statement->execute([
@@ -99,6 +135,9 @@ class Question
             'accepted_answers_json' => $data['accepted_answers_json'],
             'origin' => $data['origin'],
             'status' => $data['status'],
+            'submitted_by_token' => $data['submitted_by_token'] ?? null,
+            'submitted_nickname' => $data['submitted_nickname'] ?? null,
+            'filter_flags' => $data['filter_flags'] ?? null,
         ]);
 
         return (int) Database::connect()->lastInsertId();
@@ -133,6 +172,37 @@ class Question
             'UPDATE questions SET is_active = 1 - is_active WHERE id = :id'
         );
         $statement->execute(['id' => $id]);
+    }
+
+    public static function approve(int $id, int $adminId): bool
+    {
+        $statement = Database::connect()->prepare(
+            "UPDATE questions
+             SET status = 'approved', reviewed_by = :reviewed_by, reviewed_at = NOW(), is_active = 1
+             WHERE id = :id AND status = 'pending'"
+        );
+        $statement->execute([
+            'reviewed_by' => $adminId,
+            'id' => $id,
+        ]);
+
+        return $statement->rowCount() > 0;
+    }
+
+    public static function reject(int $id, int $adminId, string $reason): bool
+    {
+        $statement = Database::connect()->prepare(
+            "UPDATE questions
+             SET status = 'rejected', reviewed_by = :reviewed_by, reviewed_at = NOW(), rejection_reason = :rejection_reason
+             WHERE id = :id AND status = 'pending'"
+        );
+        $statement->execute([
+            'reviewed_by' => $adminId,
+            'rejection_reason' => $reason,
+            'id' => $id,
+        ]);
+
+        return $statement->rowCount() > 0;
     }
 
     public static function countPending(): int
