@@ -15,6 +15,7 @@ $isEdit = $question !== null;
 
 $workId = $old['anime_work_id'] ?? ($question['anime_work_id'] ?? '');
 $type = $old['type'] ?? ($question['type'] ?? 'multiple_choice');
+$difficulty = $old['difficulty'] ?? ($question['difficulty'] ?? 'normal');
 $prompt = $old['prompt'] ?? ($question['prompt'] ?? '');
 $correctAnswer = $old['correct_answer'] ?? ($question['correct_answer'] ?? '');
 
@@ -41,6 +42,12 @@ if (isset($old['accepted_answers'])) {
 }
 
 $action = $isEdit ? '/admin/questions/' . (int) $question['id'] : '/admin/questions';
+
+$difficultyLabels = [
+    'easy' => '簡單',
+    'normal' => '普通',
+    'hard' => '困難',
+];
 
 ?>
 <div class="admin-question-form">
@@ -80,6 +87,15 @@ $action = $isEdit ? '/admin/questions/' . (int) $question['id'] : '/admin/questi
                 填字題
             </label>
         </fieldset>
+
+        <label for="difficulty">難易度</label>
+        <select id="difficulty" name="difficulty" required>
+            <?php foreach ($difficultyLabels as $value => $label): ?>
+                <option value="<?= htmlspecialchars($value, ENT_QUOTES, 'UTF-8') ?>"<?= (string) $difficulty === $value ? ' selected' : '' ?>>
+                    <?= htmlspecialchars($label, ENT_QUOTES, 'UTF-8') ?>
+                </option>
+            <?php endforeach; ?>
+        </select>
 
         <label for="prompt">題目內容</label>
         <textarea id="prompt" name="prompt" rows="3" required><?= htmlspecialchars((string) $prompt, ENT_QUOTES, 'UTF-8') ?></textarea>

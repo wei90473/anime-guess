@@ -5,22 +5,20 @@ declare(strict_types=1);
 /**
  * @var array $session
  * @var array $questions
+ * @var array $summary
  */
 
 ?>
 <div class="quiz-result">
     <h1>作答結果</h1>
 
-    <?php
-    $correctCount = 0;
-    foreach ($questions as $item) {
-        if (!empty($item['is_correct'])) {
-            $correctCount++;
-        }
-    }
-    $total = count($questions);
-    ?>
-    <p class="quiz-result-score">答對 <?= (int) $correctCount ?> / <?= (int) $total ?> 題</p>
+    <p class="quiz-result-score">答對 <?= (int) $summary['correct_count'] ?> / <?= (int) $summary['total'] ?> 題（<?= (int) $summary['percent'] ?>%）</p>
+
+    <div class="quiz-result-bar-track">
+        <div class="quiz-result-bar-fill" style="width: <?= (int) $summary['percent'] ?>%;"></div>
+    </div>
+
+    <p class="quiz-result-praise"><?= htmlspecialchars((string) $summary['praise'], ENT_QUOTES, 'UTF-8') ?></p>
 
     <ul class="quiz-result-list">
         <?php foreach ($questions as $index => $item): ?>

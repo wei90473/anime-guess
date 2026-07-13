@@ -137,6 +137,68 @@ class QuizService
         ];
     }
 
+    public static function orderedChoices(array $question): array
+    {
+        if ($question['type'] !== 'multiple_choice' || empty($question['choices_json'])) {
+            return [];
+        }
+
+        $decoded = json_decode((string) $question['choices_json'], true);
+        $choices = is_array($decoded) ? array_values($decoded) : [];
+
+        if ($choices === []) {
+            return $choices;
+        }
+
+        mt_srand((int) $question['id']);
+        shuffle($choices);
+        mt_srand();
+
+        return $choices;
+    }
+
+    public static function resultSummary(array $questions): array
+    {
+        $total = count($questions);
+        $correctCount = 0;
+
+        foreach ($questions as $item) {
+            if (!empty($item['is_correct'])) {
+                $correctCount++;
+            }
+        }
+
+        $percent = $total > 0 ? (int) round($correctCount / $total * 100) : 0;
+
+        return [
+            'correct_count' => $correctCount,
+            'total' => $total,
+            'percent' => $percent,
+            'praise' => self::praiseForPercent($percent),
+        ];
+    }
+
+    private static function praiseForPercent(int $percent): string
+    {
+        if ($percent === 100) {
+            return '滿分表現，你是真正的動漫達人！';
+        }
+
+        if ($percent >= 80) {
+            return '表現非常好，只差一點就滿分了！';
+        }
+
+        if ($percent >= 60) {
+            return '不錯的成績，繼續保持！';
+        }
+
+        if ($percent >= 40) {
+            return '還有進步空間，再挑戰一次看看！';
+        }
+
+        return '這次有點可惜，多熟悉一下作品內容再來挑戰吧！';
+    }
+
     private static function checkAnswer(array $question, string $playerAnswer): bool
     {
         if ($question['type'] === 'multiple_choice') {

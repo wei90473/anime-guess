@@ -35,6 +35,7 @@ class QuizController
             'title' => '猜謎作答',
             'session' => $current['session'],
             'question' => $current['question'],
+            'choices' => QuizService::orderedChoices($current['question']),
             'currentIndex' => $current['current_index'],
             'total' => $current['total'],
         ]);
@@ -90,6 +91,7 @@ class QuizController
             'title' => '作答結果',
             'session' => $session,
             'questions' => $questions,
+            'summary' => QuizService::resultSummary($questions),
         ]);
     }
 }

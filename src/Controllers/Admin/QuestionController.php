@@ -14,6 +14,7 @@ use App\Support\View;
 class QuestionController
 {
     private const TYPES = ['multiple_choice', 'fill_blank'];
+    private const DIFFICULTIES = ['easy', 'normal', 'hard'];
 
     public function index(): void
     {
@@ -150,6 +151,7 @@ class QuestionController
 
         $workIdRaw = trim((string) ($post['anime_work_id'] ?? ''));
         $type = (string) ($post['type'] ?? '');
+        $difficulty = (string) ($post['difficulty'] ?? 'normal');
         $prompt = trim((string) ($post['prompt'] ?? ''));
         $correctAnswer = trim((string) ($post['correct_answer'] ?? ''));
         $choicesRaw = is_array($post['choices'] ?? null) ? $post['choices'] : [];
@@ -158,6 +160,7 @@ class QuestionController
         $old = [
             'anime_work_id' => $workIdRaw,
             'type' => $type,
+            'difficulty' => $difficulty,
             'prompt' => $prompt,
             'correct_answer' => $correctAnswer,
             'choices' => $choicesRaw,
@@ -172,6 +175,10 @@ class QuestionController
 
         if (!Validator::inArray($type, self::TYPES)) {
             $errors[] = '請選擇題型';
+        }
+
+        if (!Validator::inArray($difficulty, self::DIFFICULTIES)) {
+            $errors[] = '請選擇有效的難易度';
         }
 
         if ($prompt === '') {
@@ -226,6 +233,7 @@ class QuestionController
         $data = [
             'anime_work_id' => $workId,
             'type' => $type,
+            'difficulty' => $difficulty,
             'prompt' => $prompt,
             'choices_json' => $choicesJson,
             'correct_answer' => $correctAnswer,

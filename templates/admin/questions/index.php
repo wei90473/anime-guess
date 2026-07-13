@@ -15,6 +15,12 @@ $typeLabels = [
     'fill_blank' => '填字題',
 ];
 
+$difficultyLabels = [
+    'easy' => '簡單',
+    'normal' => '普通',
+    'hard' => '困難',
+];
+
 $statusLabels = [
     'pending' => '待審',
     'approved' => '已核准',
@@ -57,6 +63,7 @@ $statusLabels = [
             <th>ID</th>
             <th>作品</th>
             <th>題型</th>
+            <th>難易度</th>
             <th>題目內容</th>
             <th>狀態</th>
             <th>上下架</th>
@@ -67,7 +74,7 @@ $statusLabels = [
         <tbody>
         <?php if (empty($questions)): ?>
             <tr>
-                <td colspan="8">尚無題目</td>
+                <td colspan="9">尚無題目</td>
             </tr>
         <?php endif; ?>
         <?php foreach ($questions as $question): ?>
@@ -80,6 +87,7 @@ $statusLabels = [
                 <td><?= (int) $question['id'] ?></td>
                 <td><?= htmlspecialchars($question['work_title'], ENT_QUOTES, 'UTF-8') ?></td>
                 <td><?= htmlspecialchars($typeLabels[$question['type']] ?? $question['type'], ENT_QUOTES, 'UTF-8') ?></td>
+                <td><?= htmlspecialchars($difficultyLabels[$question['difficulty']] ?? $question['difficulty'], ENT_QUOTES, 'UTF-8') ?></td>
                 <td><?= htmlspecialchars($promptShort, ENT_QUOTES, 'UTF-8') ?></td>
                 <td><?= htmlspecialchars($statusLabels[$question['status']] ?? $question['status'], ENT_QUOTES, 'UTF-8') ?></td>
                 <td><?= $isActive ? '上架' : '下架' ?></td>

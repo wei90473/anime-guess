@@ -8,7 +8,7 @@ use App\Support\Database;
 
 class Question
 {
-    private const COLUMNS = 'id, anime_work_id, type, prompt, choices_json, correct_answer,
+    private const COLUMNS = 'id, anime_work_id, type, difficulty, prompt, choices_json, correct_answer,
         accepted_answers_json, origin, status, submitted_by_token, submitted_nickname,
         filter_flags, reviewed_by, reviewed_at, rejection_reason, is_active, created_at, updated_at';
 
@@ -30,7 +30,7 @@ class Question
 
     public static function findAll(array $filters = []): array
     {
-        $sql = 'SELECT q.id, q.anime_work_id, q.type, q.prompt, q.choices_json, q.correct_answer,
+        $sql = 'SELECT q.id, q.anime_work_id, q.type, q.difficulty, q.prompt, q.choices_json, q.correct_answer,
                 q.accepted_answers_json, q.origin, q.status, q.submitted_by_token, q.submitted_nickname,
                 q.filter_flags, q.reviewed_by, q.reviewed_at, q.rejection_reason, q.is_active,
                 q.created_at, q.updated_at, w.title AS work_title
@@ -117,11 +117,11 @@ class Question
     {
         $statement = Database::connect()->prepare(
             'INSERT INTO questions (
-                anime_work_id, type, prompt, choices_json, correct_answer,
+                anime_work_id, type, difficulty, prompt, choices_json, correct_answer,
                 accepted_answers_json, origin, status, submitted_by_token,
                 submitted_nickname, filter_flags
             ) VALUES (
-                :anime_work_id, :type, :prompt, :choices_json, :correct_answer,
+                :anime_work_id, :type, :difficulty, :prompt, :choices_json, :correct_answer,
                 :accepted_answers_json, :origin, :status, :submitted_by_token,
                 :submitted_nickname, :filter_flags
             )'
@@ -129,6 +129,7 @@ class Question
         $statement->execute([
             'anime_work_id' => $data['anime_work_id'],
             'type' => $data['type'],
+            'difficulty' => $data['difficulty'] ?? 'normal',
             'prompt' => $data['prompt'],
             'choices_json' => $data['choices_json'],
             'correct_answer' => $data['correct_answer'],
@@ -149,6 +150,7 @@ class Question
             'UPDATE questions
              SET anime_work_id = :anime_work_id,
                  type = :type,
+                 difficulty = :difficulty,
                  prompt = :prompt,
                  choices_json = :choices_json,
                  correct_answer = :correct_answer,
@@ -158,6 +160,7 @@ class Question
         $statement->execute([
             'anime_work_id' => $data['anime_work_id'],
             'type' => $data['type'],
+            'difficulty' => $data['difficulty'] ?? 'normal',
             'prompt' => $data['prompt'],
             'choices_json' => $data['choices_json'],
             'correct_answer' => $data['correct_answer'],
