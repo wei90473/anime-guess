@@ -8,13 +8,14 @@ use App\Models\AnimeWork;
 use App\Models\Question;
 use App\Services\AuthService;
 use App\Support\Csrf;
+use App\Support\DifficultyScale;
 use App\Support\Validator;
 use App\Support\View;
 
 class QuestionController
 {
     private const TYPES = ['multiple_choice', 'fill_blank'];
-    private const DIFFICULTIES = ['easy', 'normal', 'hard'];
+    private const DIFFICULTIES = DifficultyScale::TIER_ORDER;
 
     public function index(): void
     {
@@ -107,7 +108,7 @@ class QuestionController
             return;
         }
 
-        [$errors, $data, $old] = $this->validateInput($_POST);
+        [$errors, $data, $old] = $this->validateInput($_POST, $question);
 
         if (!empty($errors)) {
             View::render('admin/questions/form', [
@@ -145,7 +146,7 @@ class QuestionController
         exit;
     }
 
-    private function validateInput(array $post): array
+    private function validateInput(array $post, ?array $existing = null): array
     {
         $errors = [];
 
@@ -230,10 +231,15 @@ class QuestionController
             $acceptedAnswersJson = $acceptedAnswers === [] ? null : json_encode($acceptedAnswers, JSON_UNESCAPED_UNICODE);
         }
 
+        $difficultyScore = ($existing !== null && $existing['difficulty'] === $difficulty)
+            ? (int) $existing['difficulty_score']
+            : DifficultyScale::midpointForTier($difficulty);
+
         $data = [
             'anime_work_id' => $workId,
             'type' => $type,
             'difficulty' => $difficulty,
+            'difficulty_score' => $difficultyScore,
             'prompt' => $prompt,
             'choices_json' => $choicesJson,
             'correct_answer' => $correctAnswer,

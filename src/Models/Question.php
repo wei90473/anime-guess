@@ -5,10 +5,11 @@ declare(strict_types=1);
 namespace App\Models;
 
 use App\Support\Database;
+use App\Support\DifficultyScale;
 
 class Question
 {
-    private const COLUMNS = 'id, anime_work_id, type, difficulty, prompt, choices_json, correct_answer,
+    private const COLUMNS = 'id, anime_work_id, type, difficulty, difficulty_score, prompt, choices_json, correct_answer,
         accepted_answers_json, origin, status, submitted_by_token, submitted_nickname,
         filter_flags, reviewed_by, reviewed_at, rejection_reason, is_active, created_at, updated_at';
 
@@ -30,7 +31,7 @@ class Question
 
     public static function findAll(array $filters = []): array
     {
-        $sql = 'SELECT q.id, q.anime_work_id, q.type, q.difficulty, q.prompt, q.choices_json, q.correct_answer,
+        $sql = 'SELECT q.id, q.anime_work_id, q.type, q.difficulty, q.difficulty_score, q.prompt, q.choices_json, q.correct_answer,
                 q.accepted_answers_json, q.origin, q.status, q.submitted_by_token, q.submitted_nickname,
                 q.filter_flags, q.reviewed_by, q.reviewed_at, q.rejection_reason, q.is_active,
                 q.created_at, q.updated_at, w.title AS work_title
@@ -82,7 +83,7 @@ class Question
     public static function findByIdWithWork(int $id): ?array
     {
         $statement = Database::connect()->prepare(
-            'SELECT q.id, q.anime_work_id, q.type, q.prompt, q.choices_json, q.correct_answer,
+            'SELECT q.id, q.anime_work_id, q.type, q.difficulty, q.difficulty_score, q.prompt, q.choices_json, q.correct_answer,
                     q.accepted_answers_json, q.origin, q.status, q.submitted_by_token, q.submitted_nickname,
                     q.filter_flags, q.reviewed_by, q.reviewed_at, q.rejection_reason, q.is_active,
                     q.created_at, q.updated_at, w.title AS work_title
@@ -100,7 +101,7 @@ class Question
     public static function findPending(): array
     {
         $statement = Database::connect()->query(
-            "SELECT q.id, q.anime_work_id, q.type, q.prompt, q.choices_json, q.correct_answer,
+            "SELECT q.id, q.anime_work_id, q.type, q.difficulty, q.difficulty_score, q.prompt, q.choices_json, q.correct_answer,
                     q.accepted_answers_json, q.origin, q.status, q.submitted_by_token, q.submitted_nickname,
                     q.filter_flags, q.reviewed_by, q.reviewed_at, q.rejection_reason, q.is_active,
                     q.created_at, q.updated_at, w.title AS work_title
@@ -115,13 +116,16 @@ class Question
 
     public static function create(array $data): int
     {
+        $difficultyScore = DifficultyScale::clampScore((int) ($data['difficulty_score'] ?? 50));
+        $difficulty = DifficultyScale::tierForScore($difficultyScore);
+
         $statement = Database::connect()->prepare(
             'INSERT INTO questions (
-                anime_work_id, type, difficulty, prompt, choices_json, correct_answer,
+                anime_work_id, type, difficulty, difficulty_score, prompt, choices_json, correct_answer,
                 accepted_answers_json, origin, status, submitted_by_token,
                 submitted_nickname, filter_flags
             ) VALUES (
-                :anime_work_id, :type, :difficulty, :prompt, :choices_json, :correct_answer,
+                :anime_work_id, :type, :difficulty, :difficulty_score, :prompt, :choices_json, :correct_answer,
                 :accepted_answers_json, :origin, :status, :submitted_by_token,
                 :submitted_nickname, :filter_flags
             )'
@@ -129,7 +133,8 @@ class Question
         $statement->execute([
             'anime_work_id' => $data['anime_work_id'],
             'type' => $data['type'],
-            'difficulty' => $data['difficulty'] ?? 'normal',
+            'difficulty' => $difficulty,
+            'difficulty_score' => $difficultyScore,
             'prompt' => $data['prompt'],
             'choices_json' => $data['choices_json'],
             'correct_answer' => $data['correct_answer'],
@@ -146,11 +151,15 @@ class Question
 
     public static function update(int $id, array $data): void
     {
+        $difficultyScore = DifficultyScale::clampScore((int) ($data['difficulty_score'] ?? 50));
+        $difficulty = DifficultyScale::tierForScore($difficultyScore);
+
         $statement = Database::connect()->prepare(
             'UPDATE questions
              SET anime_work_id = :anime_work_id,
                  type = :type,
                  difficulty = :difficulty,
+                 difficulty_score = :difficulty_score,
                  prompt = :prompt,
                  choices_json = :choices_json,
                  correct_answer = :correct_answer,
@@ -160,7 +169,8 @@ class Question
         $statement->execute([
             'anime_work_id' => $data['anime_work_id'],
             'type' => $data['type'],
-            'difficulty' => $data['difficulty'] ?? 'normal',
+            'difficulty' => $difficulty,
+            'difficulty_score' => $difficultyScore,
             'prompt' => $data['prompt'],
             'choices_json' => $data['choices_json'],
             'correct_answer' => $data['correct_answer'],
@@ -192,18 +202,12 @@ class Question
         return $statement->rowCount() > 0;
     }
 
-    public static function reject(int $id, int $adminId, string $reason): bool
+    public static function deleteById(int $id): bool
     {
         $statement = Database::connect()->prepare(
-            "UPDATE questions
-             SET status = 'rejected', reviewed_by = :reviewed_by, reviewed_at = NOW(), rejection_reason = :rejection_reason
-             WHERE id = :id AND status = 'pending'"
+            "DELETE FROM questions WHERE id = :id AND status = 'pending'"
         );
-        $statement->execute([
-            'reviewed_by' => $adminId,
-            'rejection_reason' => $reason,
-            'id' => $id,
-        ]);
+        $statement->execute(['id' => $id]);
 
         return $statement->rowCount() > 0;
     }
@@ -224,6 +228,21 @@ class Question
              WHERE anime_work_id = :work_id AND status = 'approved' AND is_active = 1"
         );
         $statement->execute(['work_id' => $workId]);
+
+        return (int) $statement->fetchColumn();
+    }
+
+    public static function countByWorkAndType(int $workId, string $type): int
+    {
+        if ($type === 'mixed') {
+            return self::countByWork($workId);
+        }
+
+        $statement = Database::connect()->prepare(
+            "SELECT COUNT(*) FROM questions
+             WHERE anime_work_id = :work_id AND status = 'approved' AND is_active = 1 AND type = :type"
+        );
+        $statement->execute(['work_id' => $workId, 'type' => $type]);
 
         return (int) $statement->fetchColumn();
     }

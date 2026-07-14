@@ -8,7 +8,6 @@ use App\Models\Question;
 use App\Services\AuthService;
 use App\Support\Csrf;
 use App\Support\Session;
-use App\Support\Validator;
 use App\Support\View;
 
 class SubmissionReviewController
@@ -67,19 +66,9 @@ class SubmissionReviewController
 
         $submission = Question::findById($id);
 
-        if ($submission === null || $submission['status'] !== 'pending') {
-            header('Location: /admin/submissions');
-            exit;
+        if ($submission !== null && $submission['status'] === 'pending') {
+            Question::deleteById($id);
         }
-
-        $reason = trim((string) ($_POST['rejection_reason'] ?? ''));
-
-        if ($reason === '' || !Validator::maxLength($reason, 255)) {
-            header('Location: /admin/submissions/' . $id);
-            exit;
-        }
-
-        Question::reject($id, (int) Session::get('admin_id'), $reason);
 
         header('Location: /admin/submissions');
         exit;

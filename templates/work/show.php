@@ -45,6 +45,48 @@ use App\Support\Csrf;
                 <?php endif; ?>
             </fieldset>
 
+            <fieldset>
+                <legend>選擇題型</legend>
+
+                <label>
+                    <input type="radio" name="question_type" value="mixed" checked>
+                    混合
+                </label>
+                <label>
+                    <input type="radio" name="question_type" value="multiple_choice">
+                    選擇題
+                </label>
+                <label>
+                    <input type="radio" name="question_type" value="fill_blank">
+                    填字題
+                </label>
+            </fieldset>
+
+            <fieldset>
+                <legend>選擇難易度</legend>
+
+                <label>
+                    <input type="radio" name="difficulty" value="any" checked>
+                    不限
+                </label>
+                <label>
+                    <input type="radio" name="difficulty" value="easy">
+                    簡單
+                </label>
+                <label>
+                    <input type="radio" name="difficulty" value="normal">
+                    普通
+                </label>
+                <label>
+                    <input type="radio" name="difficulty" value="hard">
+                    困難
+                </label>
+                <label>
+                    <input type="radio" name="difficulty" value="extreme">
+                    極難
+                </label>
+            </fieldset>
+
             <button type="submit" class="work-start-button">開始！</button>
         </form>
     <?php endif; ?>

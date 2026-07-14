@@ -16,6 +16,7 @@ $difficultyLabels = [
     'easy' => '簡單',
     'normal' => '普通',
     'hard' => '困難',
+    'extreme' => '極難',
 ];
 $difficultyLabel = $difficultyLabels[$question['difficulty']] ?? '普通';
 
@@ -41,7 +42,7 @@ $difficultyLabel = $difficultyLabels[$question['difficulty']] ?? '普通';
                 <?php endforeach; ?>
             </fieldset>
         <?php else: ?>
-            <input type="text" name="answer" class="quiz-fill-input" required>
+            <input type="text" name="answer" class="quiz-fill-input" autocomplete="off" required>
             <p class="quiz-fill-hint">提示：答案約 <?= mb_strlen((string) $question['correct_answer'], 'UTF-8') ?> 字</p>
         <?php endif; ?>
 

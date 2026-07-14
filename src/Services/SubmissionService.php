@@ -5,6 +5,9 @@ declare(strict_types=1);
 namespace App\Services;
 
 use App\Models\Question;
+use App\Models\SubmissionAttempt;
+use App\Support\Database;
+use App\Support\DifficultyScale;
 use App\Support\RuleFilter;
 
 class SubmissionService
@@ -12,6 +15,7 @@ class SubmissionService
     public static function submit(array $postData, string $guestToken): array
     {
         $type = (string) ($postData['type'] ?? '');
+        $difficulty = (string) ($postData['difficulty'] ?? '');
 
         $choices = [];
 
@@ -44,6 +48,7 @@ class SubmissionService
         $result = RuleFilter::check([
             'anime_work_id' => $animeWorkId,
             'type' => $type,
+            'difficulty' => $difficulty,
             'prompt' => $prompt,
             'correct_answer' => $correctAnswer,
             'choices' => $choices,
@@ -64,19 +69,33 @@ class SubmissionService
 
         $nickname = trim((string) ($postData['submitted_nickname'] ?? ''));
 
-        Question::create([
-            'anime_work_id' => $animeWorkId,
-            'type' => $type,
-            'prompt' => $prompt,
-            'choices_json' => $choicesJson,
-            'correct_answer' => $correctAnswer,
-            'accepted_answers_json' => $acceptedAnswersJson,
-            'origin' => 'submission',
-            'status' => 'pending',
-            'submitted_by_token' => $guestToken,
-            'submitted_nickname' => $nickname !== '' ? mb_substr($nickname, 0, 50, 'UTF-8') : null,
-            'filter_flags' => $result['flags'] !== [] ? json_encode($result['flags'], JSON_UNESCAPED_UNICODE) : null,
-        ]);
+        $pdo = Database::connect();
+        $pdo->beginTransaction();
+
+        try {
+            Question::create([
+                'anime_work_id' => $animeWorkId,
+                'type' => $type,
+                'difficulty_score' => DifficultyScale::midpointForTier($difficulty),
+                'prompt' => $prompt,
+                'choices_json' => $choicesJson,
+                'correct_answer' => $correctAnswer,
+                'accepted_answers_json' => $acceptedAnswersJson,
+                'origin' => 'submission',
+                'status' => 'pending',
+                'submitted_by_token' => $guestToken,
+                'submitted_nickname' => $nickname !== '' ? mb_substr($nickname, 0, 50, 'UTF-8') : null,
+                'filter_flags' => $result['flags'] !== [] ? json_encode($result['flags'], JSON_UNESCAPED_UNICODE) : null,
+            ]);
+
+            SubmissionAttempt::record($guestToken);
+
+            $pdo->commit();
+        } catch (\Throwable $e) {
+            $pdo->rollBack();
+
+            throw $e;
+        }
 
         return ['success' => true];
     }

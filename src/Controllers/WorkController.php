@@ -15,6 +15,8 @@ use App\Support\View;
 class WorkController
 {
     private const ALLOWED_QUESTION_COUNTS = [5, 10];
+    private const ALLOWED_QUESTION_TYPES = ['mixed', 'multiple_choice', 'fill_blank'];
+    private const ALLOWED_DIFFICULTIES = ['any', 'easy', 'normal', 'hard', 'extreme'];
 
     public function show(int $id): void
     {
@@ -63,7 +65,19 @@ class WorkController
             $questionCount = 5;
         }
 
-        $availableCount = Question::countByWork($id);
+        $questionType = (string) ($_POST['question_type'] ?? 'mixed');
+
+        if (!in_array($questionType, self::ALLOWED_QUESTION_TYPES, true)) {
+            $questionType = 'mixed';
+        }
+
+        $difficulty = (string) ($_POST['difficulty'] ?? 'any');
+
+        if (!in_array($difficulty, self::ALLOWED_DIFFICULTIES, true)) {
+            $difficulty = 'any';
+        }
+
+        $availableCount = Question::countByWorkAndType($id, $questionType);
 
         if ($availableCount < $questionCount) {
             Session::set('work_start_error', '題目不足，無法開始');
@@ -72,7 +86,7 @@ class WorkController
             exit;
         }
 
-        $sessionToken = QuizService::startSession($id, $guestToken, $questionCount);
+        $sessionToken = QuizService::startSession($id, $guestToken, $questionCount, $questionType, $difficulty);
 
         header('Location: /quiz/' . $sessionToken);
         exit;

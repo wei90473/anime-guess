@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Support;
 
+use App\Models\SubmissionAttempt;
+
 class RuleFilter
 {
     private const RATE_LIMIT_COUNT = 5;
@@ -16,6 +18,7 @@ class RuleFilter
 
         $animeWorkId = (int) ($data['anime_work_id'] ?? 0);
         $type = (string) ($data['type'] ?? '');
+        $difficulty = (string) ($data['difficulty'] ?? '');
         $prompt = trim((string) ($data['prompt'] ?? ''));
         $correctAnswer = trim((string) ($data['correct_answer'] ?? ''));
 
@@ -36,6 +39,7 @@ class RuleFilter
         // 1. 必填欄位缺漏
         $missingRequired = $animeWorkId <= 0
             || $type === ''
+            || $difficulty === ''
             || $prompt === ''
             || $correctAnswer === ''
             || ($type === 'multiple_choice' && (count($choices) !== 4 || count($nonEmptyChoices) !== 4));
@@ -52,6 +56,11 @@ class RuleFilter
         // 1c. type 白名單
         if ($type !== '' && !in_array($type, ['multiple_choice', 'fill_blank'], true)) {
             $errors[] = '題目類型不正確';
+        }
+
+        // 1d. difficulty 白名單
+        if ($difficulty !== '' && !in_array($difficulty, DifficultyScale::TIER_ORDER, true)) {
+            $errors[] = '請選擇有效的難易度';
         }
 
         // 2. prompt 長度 5~200
@@ -153,15 +162,7 @@ class RuleFilter
 
     private static function countRecentSubmissions(string $guestToken): int
     {
-        $statement = Database::connect()->prepare(
-            'SELECT COUNT(*) FROM questions WHERE submitted_by_token = :token AND created_at >= :since'
-        );
-        $statement->execute([
-            'token' => $guestToken,
-            'since' => date('Y-m-d H:i:s', time() - self::RATE_LIMIT_HOURS * 3600),
-        ]);
-
-        return (int) $statement->fetchColumn();
+        return SubmissionAttempt::countRecent($guestToken, self::RATE_LIMIT_HOURS);
     }
 
     private static function hasDuplicatePrompt(int $animeWorkId, string $prompt): bool

@@ -12,6 +12,7 @@ use App\Support\Csrf;
 
 $animeWorkId = $old['anime_work_id'] ?? '';
 $type = $old['type'] ?? 'multiple_choice';
+$difficulty = $old['difficulty'] ?? 'normal';
 $prompt = $old['prompt'] ?? '';
 $correctAnswer = $old['correct_answer'] ?? '';
 $acceptedAnswers = $old['accepted_answers'] ?? '';
@@ -22,6 +23,13 @@ $choices = is_array($old['choices'] ?? null) ? $old['choices'] : [];
 while (count($choices) < 4) {
     $choices[] = '';
 }
+
+$difficultyLabels = [
+    'easy' => '簡單',
+    'normal' => '普通',
+    'hard' => '困難',
+    'extreme' => '極難',
+];
 
 ?>
 <div class="submission-form">
@@ -60,6 +68,17 @@ while (count($choices) < 4) {
                     <?= $type === 'fill_blank' ? 'checked' : '' ?>>
                 填字題
             </label>
+        </fieldset>
+
+        <fieldset>
+            <legend>難易度</legend>
+            <?php foreach ($difficultyLabels as $value => $label): ?>
+                <label>
+                    <input type="radio" name="difficulty" value="<?= htmlspecialchars($value, ENT_QUOTES, 'UTF-8') ?>"
+                        <?= $difficulty === $value ? 'checked' : '' ?>>
+                    <?= htmlspecialchars($label, ENT_QUOTES, 'UTF-8') ?>
+                </label>
+            <?php endforeach; ?>
         </fieldset>
 
         <label for="prompt">題目內容</label>

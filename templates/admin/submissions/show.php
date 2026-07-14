@@ -16,6 +16,13 @@ $typeLabels = [
     'fill_blank' => '填字題',
 ];
 
+$difficultyLabels = [
+    'easy' => '簡單',
+    'normal' => '普通',
+    'hard' => '困難',
+    'extreme' => '極難',
+];
+
 $statusLabels = [
     'pending' => '待審',
     'approved' => '已核准',
@@ -48,6 +55,10 @@ $nickname = $submission['submitted_nickname'] !== null && $submission['submitted
         <tr>
             <th>題型</th>
             <td><?= htmlspecialchars($typeLabels[$submission['type']] ?? $submission['type'], ENT_QUOTES, 'UTF-8') ?></td>
+        </tr>
+        <tr>
+            <th>難易度</th>
+            <td><?= htmlspecialchars($difficultyLabels[$submission['difficulty']] ?? (string) $submission['difficulty'], ENT_QUOTES, 'UTF-8') ?></td>
         </tr>
         <tr>
             <th>題目內容</th>
@@ -130,11 +141,10 @@ $nickname = $submission['submitted_nickname'] !== null && $submission['submitted
             <button type="submit">核准</button>
         </form>
 
-        <form method="post" action="/admin/submissions/<?= (int) $submission['id'] ?>/reject">
+        <form method="post" action="/admin/submissions/<?= (int) $submission['id'] ?>/reject"
+            onsubmit="return confirm('確定要拒絕並刪除此投稿？此動作無法復原');" style="display:inline">
             <?= Csrf::inputHtml() ?>
-            <label for="rejection_reason">拒絕原因</label>
-            <textarea id="rejection_reason" name="rejection_reason" rows="3" maxlength="255" required></textarea>
-            <button type="submit">拒絕</button>
+            <button type="submit">拒絕（將刪除此投稿）</button>
         </form>
     <?php endif; ?>
 </div>

@@ -19,6 +19,7 @@ $difficultyLabels = [
     'easy' => '簡單',
     'normal' => '普通',
     'hard' => '困難',
+    'extreme' => '極難',
 ];
 
 $statusLabels = [

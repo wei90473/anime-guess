@@ -29,6 +29,20 @@ class QuizSession
         return (int) Database::connect()->lastInsertId();
     }
 
+    public static function findById(int $id): ?array
+    {
+        $statement = Database::connect()->prepare(
+            'SELECT id, session_token, guest_token, anime_work_id, question_count, correct_count,
+                status, started_at, completed_at, created_at
+             FROM quiz_sessions WHERE id = :id'
+        );
+        $statement->execute(['id' => $id]);
+
+        $row = $statement->fetch();
+
+        return $row === false ? null : $row;
+    }
+
     public static function findByToken(string $token): ?array
     {
         $statement = Database::connect()->prepare(
