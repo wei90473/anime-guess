@@ -12,11 +12,13 @@ if (!is_file($autoload)) {
 
 require $autoload;
 
+use App\Controllers\Admin\FeedbackController as AdminFeedbackController;
 use App\Controllers\Admin\AuthController as AdminAuthController;
 use App\Controllers\Admin\DashboardController as AdminDashboardController;
 use App\Controllers\Admin\QuestionController as AdminQuestionController;
 use App\Controllers\Admin\SubmissionReviewController as AdminSubmissionReviewController;
 use App\Controllers\Admin\WorkController as AdminWorkController;
+use App\Controllers\FeedbackController;
 use App\Controllers\HomeController;
 use App\Controllers\QuizController;
 use App\Controllers\SubmissionController;
@@ -36,6 +38,7 @@ Router::add('GET', '/quiz/{session_token}/result', QuizController::class, 'resul
 Router::add('GET', '/submit', SubmissionController::class, 'form');
 Router::add('POST', '/submit', SubmissionController::class, 'submit');
 Router::add('GET', '/submit/thanks', SubmissionController::class, 'thanks');
+Router::add('POST', '/questions/{id}/feedback', FeedbackController::class, 'submit');
 
 // 管理後台
 Router::add('GET', '/admin/login', AdminAuthController::class, 'showLoginForm');
@@ -61,5 +64,8 @@ Router::add('GET', '/admin/submissions', AdminSubmissionReviewController::class,
 Router::add('GET', '/admin/submissions/{id}', AdminSubmissionReviewController::class, 'show');
 Router::add('POST', '/admin/submissions/{id}/approve', AdminSubmissionReviewController::class, 'approve');
 Router::add('POST', '/admin/submissions/{id}/reject', AdminSubmissionReviewController::class, 'reject');
+
+Router::add('GET', '/admin/feedbacks', AdminFeedbackController::class, 'index');
+Router::add('POST', '/admin/feedbacks/{id}/status', AdminFeedbackController::class, 'updateStatus');
 
 Router::dispatch($_SERVER['REQUEST_METHOD'], $_SERVER['REQUEST_URI']);
