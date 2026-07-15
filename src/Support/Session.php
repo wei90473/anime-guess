@@ -19,6 +19,7 @@ class Session
         session_set_cookie_params([
             'httponly' => true,
             'samesite' => 'Lax',
+            'secure'   => Env::get('APP_ENV') === 'production',
         ]);
 
         session_name((string) Env::get('SESSION_NAME', 'app_session'));
